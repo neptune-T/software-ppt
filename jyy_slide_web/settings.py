@@ -24,8 +24,10 @@ SECRET_KEY = "django-insecure-bxd)3tz&y6oo_jq5r^92qyqbg^hx=#m(#i+n#@&cih86qmh8k1
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-ALLOWED_HOSTS = ['*']
-CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'https://localhost').split(',')
+ALLOWED_HOSTS = ['software-ppt.onrender.com']  # 将 Render 域名添加到 ALLOWED_HOSTS
+
+# CSRF trusted origins
+CSRF_TRUSTED_ORIGINS = ['https://software-ppt.onrender.com']  # 添加 Render 的域名
 
 # Application definition
 
@@ -50,7 +52,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     'whitenoise.middleware.WhiteNoiseMiddleware',
-
 ]
 
 ROOT_URLCONF = "jyy_slide_web.urls"
@@ -120,7 +121,7 @@ STATIC_URL = '/static/'
 
 # 指定静态文件目录
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'slideapp' ,'src','static'),
+    os.path.join(BASE_DIR, 'slideapp', 'src', 'static'),
     # 如果有其他静态文件目录，继续添加
 ]
 
@@ -132,6 +133,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
