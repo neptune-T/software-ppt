@@ -1,0 +1,15 @@
+jinja2
+lxml
+markdown
+pygments
+pyquery
+pyyaml
+requests
+types-markdown
+types-pyyaml
+types-requests
+whitenoise
+django
+channels
+daphne
+twisted[http2,tls]

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Slide</title>
+    <style>
+        /* 原有的样式保持不变 */
+        .slide-list {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .slide-item {
+            width: 200px;
+            height: 150px;
+            margin: 10px;
+            border: 1px solid #ccc;
+            position: relative;
+            text-align: center;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex; /* 使用 Flex 布局 */
+            flex-direction: column;
+            justify-content: center; /* 垂直居中 */
+            overflow: hidden; /* 隐藏溢出内容 */
+            padding: 10px; /* 添加内边距 */
+            box-sizing: border-box; /* 使 padding 计入总高度 */
+        }
+
+        /* 更新点击区域的样式 */
+        .slide-item > div[onclick] {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* 更新标题样式 */
+        .slide-item > div[onclick] > span.title-text {
+            overflow-wrap: break-word; /* 自动换行 */
+            word-break: break-all; /* 强制换行 */
+            display: -webkit-box; /* 兼容 WebKit 内核的浏览器 */
+            -webkit-line-clamp: 3; /* 显示最多 3 行 */
+            -webkit-box-orient: vertical;
+            overflow: hidden; /* 超出部分隐藏 */
+            text-overflow: ellipsis; /* 显示省略号 */
+        }
+
+        .slide-item .title {
+            position: absolute;
+            bottom: 5px;
+            left: 0;
+            width: 100%;
+            font-size: 14px;
+            line-height: normal;
+            text-align: center;
+        }
+
+        .slide-item.new-slide {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+
+        /* 删除按钮的样式 */
+        .delete-button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: black;
+        }
+
+        /* 注销按钮的样式 */
+        .logout-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: gray;
+            border: none;
+            color: #ffffff;
+            padding: 10px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 0; /* 去除圆角，方角样式 */
+        }
+
+        .logout-button:hover {
+            background-color: gray; /* 保持灰色，风格统一 */
+        }
+
+        /* 锁图标的样式 */
+        .lock-button {
+            position: absolute;
+            top: 5px;
+            left: 5px; /* 左上角对齐 */
+            background-color: transparent; /* 移除背景 */
+            border: none; /* 移除边框 */
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .lock-button svg {
+            width: 16px; /* 锁图标的大小 */
+            height: 16px;
+            color: #333;
+            transition: color 0.3s ease;
+        }
+
+        .lock-button:hover svg {
+            color: #000; /* 悬停时的颜色变化 */
+        }
+    </style>
+</head>
+<body>
+<h1></h1>
+<div class="slide-list">
+    <!-- 新建幻灯片的入口 -->
+    <div class="slide-item new-slide" onclick="location.href='{% url 'create_slide' %}'">
+        新建幻灯片
+    </div>
+    <!-- 展示已有的幻灯片 -->
+    {% for slide in slides %}
+        <div class="slide-item">
+            <button class="lock-button" onclick="toggleLock({{ slide.id }}, {{ slide.lock|yesno:'true,false' }})">
+                {% if slide.lock %}
+                    <!-- 锁定状态的SVG图标 -->
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round" class="icon-lock">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                {% else %}
+                    <!-- 解锁状态的SVG图标 -->
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round" class="icon-unlock">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0"></path>
+                    </svg>
+                {% endif %}
+            </button>
+            <!-- 删除按钮 -->
+            <button class="delete-button" onclick="confirmDelete({{ slide.id }})">&times;</button>
+            <!-- 点击幻灯片区域进入编辑 -->
+            <div onclick="location.href='{% url 'edit_slide' slide.id %}'" style="height: 100%;">
+                {{ slide.title }}
+                <div class="title">{{ slide.created_at|date:"Y-m-d H:i" }}</div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- 注销按钮 -->
+<form method="post" action="{% url 'logout' %}">
+    {% csrf_token %}
+    <button type="submit" class="logout-button">注销</button>
+</form>
+
+<!-- 添加 JavaScript 代码 -->
+<script>
+    function confirmDelete(slideId) {
+        if (confirm('您确定要删除这张幻灯片吗？此操作无法撤销。')) {
+            // 发送删除请求
+            fetch('/delete/' + slideId + '/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+            })
+                .then(response => {
+                    if (response.ok) {
+                        // 删除成功，刷新页面
+                        location.reload();
+                    } else {
+                        alert('删除失败');
+                    }
+                })
+                .catch(error => {
+                    console.error('删除失败', error);
+                    alert('删除失败');
+                });
+        }
+    }
+
+    // 获取 CSRF token 的函数
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            let cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                let cookie = cookies[i].trim();
+                // 检查这个 cookie 字符串是否以我们想要的名字开头
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function toggleLock(slideId, isLocked) {
+        fetch('/toggle_lock/' + slideId + '/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+        })
+            .then(response => {
+                if (response.ok) {
+                    // 切换成功，刷新页面
+                    location.reload();
+                } else {
+                    alert('操作失败');
+                }
+            })
+            .catch(error => {
+                console.error('操作失败', error);
+                alert('操作失败');
+            });
+    }
+</script>
+</body>
+</html>
